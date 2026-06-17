@@ -1,0 +1,102 @@
+[client] Connecting to ws://localhost:8014/ws
+[MockClient] Starting dataset replay. Total frames: 85236
+[client] Connected!
+send thread interval: 0.12254199500057439 seconds
+send thread interval: 0.021743862998846453 seconds
+send thread interval: 0.02112292099991464 seconds
+send thread interval: 0.025073703000089154 seconds
+send thread interval: 0.02485593399978825 seconds
+send thread interval: 0.02721322199977294 seconds
+send thread interval: 0.026721308000560384 seconds
+send thread interval: 0.029529649000323843 seconds
+send thread interval: 0.21583523700064688 seconds
+[client] recv_action interval: 1.4517676830291748 seconds
+[client] Received action, version=1
+send thread interval: 0.9402136299995618 seconds
+send thread interval: 0.03139942800044082 seconds
+[client] recv_action interval: 0.0379490852355957 seconds
+[client] Received action, version=2
+send thread interval: 0.03365455999846745 seconds
+[client] recv_action interval: 0.03314852714538574 seconds
+[client] Received action, version=3
+send thread interval: 0.03279467400170688 seconds
+[client] recv_action interval: 0.0330352783203125 seconds
+[client] Received action, version=4
+send thread interval: 0.03449979599827202 seconds
+[client] recv_action interval: 0.03424239158630371 seconds
+[client] Received action, version=5
+send thread interval: 0.034161623001637054 seconds
+[client] recv_action interval: 0.03436684608459473 seconds
+[client] Received action, version=6
+[client] recv_action interval: 0.031409502029418945 seconds
+[client] Received action, version=7
+send thread interval: 0.03661935299896868 seconds
+[client] recv_action interval: 0.027918338775634766 seconds
+[client] Received action, version=8
+send thread interval: 0.03658482699938759 seconds
+[client] recv_action interval: 0.033345937728881836 seconds
+[client] Received action, version=9
+send thread interval: 0.03803544100082945 seconds
+[client] recv_action interval: 0.0333406925201416 seconds
+[client] Received action, version=10
+send thread interval: 0.03764494200004265 seconds
+[client] recv_action interval: 0.03337383270263672 seconds
+[client] Received action, version=11
+send thread interval: 0.04044246000012208 seconds
+[client] recv_action interval: 0.03384995460510254 seconds
+[client] Received action, version=12
+send thread interval: 0.039479805000155466 seconds
+[client] recv_action interval: 0.03584599494934082 seconds
+[client] Received action, version=13
+send thread interval: 0.0418481390006491 seconds
+[client] recv_action interval: 0.041790008544921875 seconds
+[client] Received action, version=14
+[client] recv_action interval: 0.022225379943847656 seconds
+[client] Received action, version=15
+send thread interval: 0.04145340699869848 seconds
+[client] recv_action interval: 0.03309750556945801 seconds
+[client] Received action, version=16
+send thread interval: 0.04630883500067284 seconds
+[client] recv_action interval: 0.03711056709289551 seconds
+[client] Received action, version=17
+[client] recv_action interval: 0.02965068817138672 seconds
+[client] Received action, version=18
+send thread interval: 0.04417334299978393 seconds
+[client] recv_action interval: 0.03361678123474121 seconds
+[client] Received action, version=19
+send thread interval: 0.04777273500076262 seconds
+[client] recv_action interval: 0.033290863037109375 seconds
+[client] Received action, version=20
+[client] recv_action interval: 0.03504061698913574 seconds
+[client] Received action, version=21
+send thread interval: 0.04795883799852163 seconds
+[client] recv_action interval: 0.031152963638305664 seconds
+[client] Received action, version=22
+send thread interval: 0.050705728001048556 seconds
+[client] recv_action interval: 0.03342866897583008 seconds
+[client] Received action, version=23
+[client] recv_action interval: 0.0382685661315918 seconds
+[client] Received action, version=24
+send thread interval: 0.04953316600040125 seconds
+[client] recv_action interval: 0.028296232223510742 seconds
+[client] Received action, version=25
+send thread interval: 0.05115641999873333 seconds
+[client] recv_action interval: 0.033249855041503906 seconds
+[client] Received action, version=26
+send thread interval: 0.0481347460008692 seconds
+[client] recv_action interval: 0.03839588165283203 seconds
+[client] Received action, version=27
+[client] recv_action interval: 0.028351783752441406 seconds
+[client] Received action, version=28
+send thread interval: 0.05172908299937262 seconds
+[client] recv_action interval: 0.03322029113769531 seconds
+[client] Received action, version=29
+[client] recv_action interval: 0.04025602340698242 seconds
+[client] Received action, version=30
+[MockClient] Send error: [Errno 32] Broken pipe
+
+=== MOCK DATASET REPLAY COMPLETE ===
+Sent frames: 33
+[client] WebSocket error: Connection to remote host was lost.
+[client] Connection closed: None - None
+[client] Client stopped

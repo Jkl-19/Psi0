@@ -1,0 +1,189 @@
+Training with  GPUs, which is/are 0
+[10:56:21 05/27] INFO     | >> [*] Server :: Initializing Policy                                                                   psi_serve_rtc-trainingtimertc.py:520
+                 INFO     | >> [*] Using device: cuda:0                                                                            psi_serve_rtc-trainingtimertc.py:185
+                 INFO     | >> [*] Serving psi                                                                                     psi_serve_rtc-trainingtimertc.py:186
+                 INFO     | >> [*] Using device: cuda:0                                                                            psi_serve_rtc-trainingtimertc.py:188
+                 INFO     | >> [*] Serving psi                                                                                     psi_serve_rtc-trainingtimertc.py:189
+[10:56:22 05/27] INFO     | >> [*] loading action model...                                                                         psi_serve_rtc-trainingtimertc.py:203
+The new embeddings will be initialized from a multivariate normal distribution that has old embeddings' mean and covariance. As described in this article: https://nlp.stanford.edu/~johnhew/vocab-expansion.html. To disable this, use `mean_resizing=False`
+[10:57:09 05/27] INFO     | >> [*] Resized model token embeddings to 153792                                                                                psi0.py:1553
+                 INFO     | >> [*] loaded vlm_backbone checkpoint successfully.                                                                            psi0.py:1556
+[10:57:10 05/27] INFO     | >> [*] Total ActionTransformerModel parameters: 497,719,256                                                                    psi0.py:1510
+                 INFO     | >> [*] Total VLM Backbone parameters: 2,131,333,120                                                                            psi0.py:1514
+                 INFO     | >> [*] loaded action head checkpoint successfully.                                                                             psi0.py:1574
+INFO:     Started server process [1651068]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8014 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56588 - "WebSocket /ws" [accepted]
+INFO:     connection open
+Server :: Spinning Up
+Server listens on 0.0.0.0:8014
+WebSocket endpoint: ws://0.0.0.0:8014/ws
+[WebSocket] Client connected
+[WebSocket] receive_obs interval: 14.147080183029175 seconds
+[10:57:29 05/27] INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+Model warmed up
+[control loop] started
+[control loop] interval: 0.0006811459898017347 seconds
+[WebSocket] send_action interval: 15.593631029129028 seconds
+[WebSocket] Sent action, version=1
+[WebSocket] receive_obs interval: 1.4506478309631348 seconds
+[10:57:31 05/27] INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[WebSocket] receive_obs interval: 0.011599302291870117 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[WebSocket] receive_obs interval: 0.009186029434204102 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[WebSocket] receive_obs interval: 0.007984399795532227 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03750461002346128 seconds
+[WebSocket] send_action interval: 0.03834676742553711 seconds
+[WebSocket] Sent action, version=2
+[WebSocket] receive_obs interval: 0.007936716079711914 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[WebSocket] receive_obs interval: 0.0073680877685546875 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[WebSocket] receive_obs interval: 0.007052898406982422 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[WebSocket] receive_obs interval: 0.0072612762451171875 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.029200592980487272 seconds
+[WebSocket] send_action interval: 0.028676271438598633 seconds
+[WebSocket] Sent action, version=3
+[WebSocket] receive_obs interval: 0.006473064422607422 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[WebSocket] receive_obs interval: 0.022405147552490234 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03316349600208923 seconds
+[WebSocket] send_action interval: 0.03247690200805664 seconds
+[WebSocket] Sent action, version=4
+[WebSocket] receive_obs interval: 0.03857755661010742 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.035125785012496635 seconds
+[WebSocket] send_action interval: 0.03666543960571289 seconds
+[WebSocket] Sent action, version=5
+[WebSocket] receive_obs interval: 0.034703731536865234 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03566221898654476 seconds
+[WebSocket] send_action interval: 0.03571486473083496 seconds
+[WebSocket] Sent action, version=6
+[WebSocket] receive_obs interval: 0.03623247146606445 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03646199300419539 seconds
+[WebSocket] send_action interval: 0.03657197952270508 seconds
+[WebSocket] Sent action, version=7
+[control loop] interval: 0.026125834992853925 seconds
+[WebSocket] send_action interval: 0.024370431900024414 seconds
+[WebSocket] Sent action, version=8
+[WebSocket] receive_obs interval: 0.03547263145446777 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.0333073100191541 seconds
+[WebSocket] send_action interval: 0.03332352638244629 seconds
+[WebSocket] Sent action, version=9
+[WebSocket] receive_obs interval: 0.03763151168823242 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.033306180994259194 seconds
+[WebSocket] send_action interval: 0.03329968452453613 seconds
+[WebSocket] Sent action, version=10
+[WebSocket] receive_obs interval: 0.03831958770751953 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03327670801081695 seconds
+[WebSocket] send_action interval: 0.03325653076171875 seconds
+[WebSocket] Sent action, version=11
+[WebSocket] receive_obs interval: 0.03797292709350586 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.033373114973073825 seconds
+[WebSocket] send_action interval: 0.033370256423950195 seconds
+[WebSocket] Sent action, version=12
+[WebSocket] receive_obs interval: 0.03951430320739746 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03345309701398946 seconds
+[WebSocket] send_action interval: 0.03346419334411621 seconds
+[WebSocket] Sent action, version=13
+[WebSocket] receive_obs interval: 0.04047441482543945 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.036436697002500296 seconds
+[WebSocket] send_action interval: 0.03795790672302246 seconds
+[WebSocket] Sent action, version=14
+[control loop] interval: 0.03017729299608618 seconds
+[WebSocket] send_action interval: 0.029427528381347656 seconds
+[WebSocket] Sent action, version=15
+[WebSocket] receive_obs interval: 0.040827035903930664 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03318722700350918 seconds
+[WebSocket] send_action interval: 0.0324552059173584 seconds
+[WebSocket] Sent action, version=16
+[WebSocket] receive_obs interval: 0.04309797286987305 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03332134798984043 seconds
+[WebSocket] send_action interval: 0.033264875411987305 seconds
+[WebSocket] Sent action, version=17
+[WebSocket] receive_obs interval: 0.0432279109954834 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.033386947005055845 seconds
+[WebSocket] send_action interval: 0.03339982032775879 seconds
+[WebSocket] Sent action, version=18
+[control loop] interval: 0.03329641299205832 seconds
+[WebSocket] send_action interval: 0.033293724060058594 seconds
+[WebSocket] Sent action, version=19
+[WebSocket] receive_obs interval: 0.04591727256774902 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03344056801870465 seconds
+[WebSocket] send_action interval: 0.033949851989746094 seconds
+[WebSocket] Sent action, version=20
+[WebSocket] receive_obs interval: 0.04494500160217285 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.033397281978977844 seconds
+[WebSocket] send_action interval: 0.03290748596191406 seconds
+[WebSocket] Sent action, version=21
+[WebSocket] receive_obs interval: 0.049466848373413086 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.036923612002283335 seconds
+[WebSocket] send_action interval: 0.03799319267272949 seconds
+[WebSocket] Sent action, version=22
+[control loop] interval: 0.02987454499816522 seconds
+[WebSocket] send_action interval: 0.028801441192626953 seconds
+[WebSocket] Sent action, version=23
+[WebSocket] receive_obs interval: 0.0509181022644043 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03330945799825713 seconds
+[WebSocket] send_action interval: 0.033330440521240234 seconds
+[WebSocket] Sent action, version=24
+[WebSocket] receive_obs interval: 0.05267786979675293 seconds
+[control loop] interval: 0.03865485600545071 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[WebSocket] send_action interval: 0.04273867607116699 seconds
+[WebSocket] Sent action, version=25
+[control loop] interval: 0.028046457999153063 seconds
+[WebSocket] send_action interval: 0.023929357528686523 seconds
+[WebSocket] Sent action, version=26
+[WebSocket] receive_obs interval: 0.052831411361694336 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[inference]  latency=0.3992s  s=15  d=6  self.t=11
+[control loop] interval: 0.03578299502260052 seconds
+[WebSocket] send_action interval: 0.03576827049255371 seconds
+[WebSocket] Sent action, version=27
+[control loop] interval: 0.0306165519868955 seconds
+[WebSocket] send_action interval: 0.030643463134765625 seconds
+[WebSocket] Sent action, version=28
+[WebSocket] receive_obs interval: 0.05096006393432617 seconds
+[10:57:32 05/27] INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+[control loop] interval: 0.03347580900299363 seconds
+[WebSocket] send_action interval: 0.03348708152770996 seconds
+[WebSocket] Sent action, version=29
+[WebSocket] receive_obs interval: 0.050673484802246094 seconds
+                 INFO     | >> [*] Instruction: Remove the cap, turn on the faucet, and fill the bottle with water.                psi_serve_rtc-trainingtimertc.py:281
+Traceback (most recent call last):
+  File "/home/xiawei/Desktop/Psi0/src/psi/deploy/psi_serve_rtc-trainingtimertc.py", line 129, in _inference_loop
+    A_new = self._predict_action_rtc(o, A_prev, d)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xiawei/Desktop/Psi0/src/psi/deploy/psi_serve_rtc-trainingtimertc.py", line 146, in _predict_action_rtc
+    A_new = self.policy.predict_action_with_training_rtc_flow(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xiawei/Desktop/Psi0/.venv-psi/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xiawei/Desktop/Psi0/src/psi/models/psi0.py", line 1763, in predict_action_with_training_rtc_flow
+    assert d < max_delay, f"Constraint violated: d={d}, max_delay={max_delay}. Need d < max_delay"
+           ^^^^^^^^^^^^^
+AssertionError: Constraint violated: d=11, max_delay=8. Need d < max_delay

@@ -38,6 +38,8 @@ from psi.utils import parse_args_to_tyro_config, pad_to_len, seed_everything
 from psi.utils.overwatch import initialize_overwatch 
 overwatch = initialize_overwatch(__name__)
 
+import torch # for torch.compile
+
 
 
 PREDICT_HORIZON = 30          # == H
@@ -46,7 +48,13 @@ DELAY_BUFFER_SIZE = 6        # == delay_buffer_size
 D_INIT = 6                   # == d_init # TODO: placeholder, needs calculation
 CTRL_PERIOD_SEC = 1. / 30       # 30Hz
 
+# ===== torch.compile configuration =====
+# Set to False to return to ordinary PyTorch eager inference.
+ENABLE_TORCH_COMPILE = True
 
+# Start with "max-autotune" because it spends more startup time searching
+# for efficient kernels for the stable deployment shapes.
+TORCH_COMPILE_MODE = "max-autotune"
 
 class RealTimeChunkController:
     def __init__(self,
@@ -72,6 +80,58 @@ class RealTimeChunkController:
         for i in range (2):
             _ = self._predict_action_rtc(copy.deepcopy(o_first), np.concatenate([copy.deepcopy(A_first[self.s_min:, :]), np.zeros((self.s_min, A_first.shape[1]), dtype=A_first.dtype)], axis=0), d_init)
         print("Model warmed up")
+        
+        # ===== Temporary non-RTC startup benchmark =====
+        #
+        # Measures ordinary Psi0 predict_action() latency without RTC.
+        # This runs once during startup, then the normal RTC deployment
+        # loop continues unchanged.
+        non_rtc_warmup_runs = 3
+        non_rtc_benchmark_runs = 30
+
+        print(
+            "[non_rtc_benchmark] "
+            f"warming up with {non_rtc_warmup_runs} unmeasured runs..."
+        )
+
+        # Warm up the exact non-RTC path before collecting measurements.
+        for _ in range(non_rtc_warmup_runs):
+            _ = self._predict_action(o_first)
+
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+
+        non_rtc_latencies_ms = []
+
+        for _ in range(non_rtc_benchmark_runs):
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+
+            start = time.perf_counter()
+
+            _ = self._predict_action(o_first)
+
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+
+            elapsed_ms = (
+                time.perf_counter() - start
+            ) * 1000.0
+
+            non_rtc_latencies_ms.append(elapsed_ms)
+
+        values = np.asarray(non_rtc_latencies_ms)
+
+        print(
+            "[non_rtc_benchmark] "
+            f"runs={len(values)} "
+            f"mean_ms={values.mean():.2f} "
+            f"p50_ms={np.percentile(values, 50):.2f} "
+            f"p90_ms={np.percentile(values, 90):.2f} "
+            f"p99_ms={np.percentile(values, 99):.2f} "
+            f"max_ms={values.max():.2f}"
+        )
+        # End of non-rtc benchmark
 
         self.A_cur = A_first # (H, D)
         self.o_cur: Dict[str, Any] | None = None 
@@ -148,7 +208,7 @@ class RealTimeChunkController:
                     states=torch.from_numpy(o['obs']).to(self.device),
                     traj2ds=None,
                     instructions=o['text_instructions'],
-                    num_inference_steps = 8,
+                    num_inference_steps = 4, 
                     prev_actions=torch.from_numpy(A_prev[np.newaxis, :, :]).to(self.device), # (H, D) -> (1, H, D)
                     inference_delay=d,
                     max_delay=8
@@ -161,7 +221,7 @@ class RealTimeChunkController:
                     states=torch.from_numpy(o['obs']).to(self.device),
                     traj2ds=None,
                     instructions=o['text_instructions'],
-                    num_inference_steps = 8,
+                    num_inference_steps = 4, 
                 )[0].float().detach().cpu().numpy() # (1, H, D) -> (H, D)
         
         return normalized_actions
@@ -205,7 +265,36 @@ class Server:
         self.model = Psi0Model.from_pretrained(run_dir, ckpt_step, launch_config, device=device)
         self.model.to(device)
         self.model.eval()
+                # ===== Selective torch.compile optimization =====
+        #
+        # Compile only the action-head forward pass. Psi0 calls this module
+        # repeatedly during each flow-inference request, so this is the
+        # lowest-risk place to begin optimizing.
+        #
+        # We intentionally do not compile the entire Psi0 model yet:
+        # - the Qwen3-VL backbone is larger and more complex;
+        # - the RTC path includes preprocessing and gradient-based guidance;
+        # - compiling a smaller region is easier to test and debug.
+        if ENABLE_TORCH_COMPILE:
+            overwatch.info(
+                "Compiling self.model.action_header.forward "
+                f"with torch.compile(mode={TORCH_COMPILE_MODE!r})..."
+            )
 
+            self.model.action_header.forward = torch.compile(
+                self.model.action_header.forward,
+                mode=TORCH_COMPILE_MODE,
+                fullgraph=False,
+                dynamic=False,
+            )
+
+            overwatch.info(
+                "Installed compiled action-head forward function. "
+                "The first predictions may take longer while compilation "
+                "and kernel tuning run."
+            )
+            
+            
         from psi.config.transform import SimpleRepackTransform, Psi0ModelTransform, ActionStateTransform
         self.maxmin:ActionStateTransform = launch_config.data.transform.field # type:ignore
         self.model_transform:Psi0ModelTransform = launch_config.data.transform.model # type:ignore

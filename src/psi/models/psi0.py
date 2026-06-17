@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import time
 from PIL import Image
 from dataclasses import dataclass
 from diffusers.utils.outputs import BaseOutput
@@ -31,6 +32,27 @@ from psi.utils import initialize_overwatch, count_parameters
 # from InternVLA.model.modules.action_model.DiT_modules.models import DiT
 # from InternVLA.model.modules.projector.QFormer import CrossAttentionBlock
 overwatch = initialize_overwatch(__name__)
+
+# ===== Temporary Psi0 component profiler =====
+#
+# Enable before starting the server:
+#   export PSI_PROFILE_COMPONENTS=1
+#
+# Disable after profiling:
+#   unset PSI_PROFILE_COMPONENTS
+#
+# CUDA synchronizations intentionally add overhead. Keep this disabled
+# during final deployment-latency measurements.
+PROFILE_PSI0_COMPONENTS = (
+    os.getenv("PSI_PROFILE_COMPONENTS", "0") == "1"
+)
+
+
+def _sync_cuda_for_profile() -> None:
+    """Wait until queued CUDA operations finish before reading the clock."""
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+
 
 # from psi.config.model import ModelConfig, InternVLA_M1_ModelConfig
 # from psi.learn.vlms import _QWen_VL_Interface
@@ -1554,6 +1576,21 @@ class Psi0Model(nn.Module):
 
         vlm_model.load_state_dict(vlm_state_dict, strict=True)
         overwatch.info("loaded vlm_backbone checkpoint successfully.")
+        
+        # GR00T-style backbone truncation.
+        # This changes model behavior; use only for an ablation.
+        select_layer = 12 #jkl
+
+        language_layers = vlm_model.model.language_model.layers
+
+        original_layers = len(language_layers)
+        while len(language_layers) > select_layer:
+            language_layers.pop(-1)
+
+        overwatch.info(
+            f"Truncated Qwen language layers from "
+            f"{original_layers} to {len(language_layers)}."
+        )
 
         # init hfm-together model with vlm backbone
         model = Psi0Model(
@@ -1653,6 +1690,13 @@ class Psi0Model(nn.Module):
     ) -> torch.Tensor:
 
         bsz = states.shape[0]
+        
+        profile_components = PROFILE_PSI0_COMPONENTS
+
+        if profile_components:
+            _sync_cuda_for_profile()
+            data_processing_start = time.perf_counter()
+        
         batch_input_ids = []
         batch_attention_mask = []
         batch_pixel_values = []
@@ -1692,7 +1736,14 @@ class Psi0Model(nn.Module):
         batch_attention_mask = torch.stack(batch_attention_mask) # (B, 80)
         batch_pixel_values = torch.stack(batch_pixel_values) # (B, 256, 1536)
         batch_image_grid_thw = torch.stack(batch_image_grid_thw) # (B, 3)
-
+        
+        
+        if profile_components:
+            _sync_cuda_for_profile()
+            data_processing_end = time.perf_counter()
+            backbone_start = data_processing_end
+            
+            
         with torch.autocast("cuda", dtype=torch.bfloat16):
             # extract vision + language features
             output = self.vlm_model(
@@ -1709,7 +1760,10 @@ class Psi0Model(nn.Module):
             # use hidden states from the last layer
             vlm_hidden_states = vlm_hidden_states_[-1] # shape (B, seq_len, D_h)  shape(16, 80, 2048)
             vlm_hidden_states = vlm_hidden_states.unsqueeze(1) # shape (B, 1, seq_len, D_h) (16, 1, 80, 2048)
-
+            if profile_components:
+                _sync_cuda_for_profile()
+                backbone_end = time.perf_counter()
+                action_head_start = backbone_end
             # generate action from noise
             action_samples = torch.randn(
                 bsz, self.action_horizon, self.action_dim, device=self.device
@@ -1733,7 +1787,39 @@ class Psi0Model(nn.Module):
                     model_output=model_pred, timestep=timestep, sample=action_samples # type: ignore
                 ).prev_sample
 
-        return action_samples.float()
+        result = action_samples.float()
+
+        if profile_components:
+            _sync_cuda_for_profile()
+            action_head_end = time.perf_counter()
+
+            data_processing_ms = (
+                data_processing_end - data_processing_start
+            ) * 1000.0
+
+            backbone_ms = (
+                backbone_end - backbone_start
+            ) * 1000.0
+
+            action_head_ms = (
+                action_head_end - action_head_start
+            ) * 1000.0
+
+            pipeline_e2e_ms = (
+                data_processing_ms
+                + backbone_ms
+                + action_head_ms
+            )
+
+            print(
+                "[psi0_components] "
+                f"data_processing_ms={data_processing_ms:.2f} "
+                f"backbone_ms={backbone_ms:.2f} "
+                f"action_head_ms={action_head_ms:.2f} "
+                f"pipeline_e2e_ms={pipeline_e2e_ms:.2f}"
+            )
+
+        return result
 
     @torch.inference_mode()
     def predict_action_with_training_rtc_flow(
