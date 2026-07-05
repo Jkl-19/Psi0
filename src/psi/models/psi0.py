@@ -1534,6 +1534,9 @@ class Psi0Model(nn.Module):
         self.vlm_model = vlm_model
         total_params = sum(p.numel() for p in self.vlm_model.parameters())
         overwatch.info(f"Total VLM Backbone parameters: {total_params:,}")
+        
+        self.use_trt_action_head = False #jkl
+        self.trt_action_head = None
 
     # load pretrained vlm+action head, and all the modules needed for predict_action
     @classmethod
@@ -1584,8 +1587,8 @@ class Psi0Model(nn.Module):
         language_layers = vlm_model.model.language_model.layers
 
         original_layers = len(language_layers)
-        while len(language_layers) > select_layer:
-            language_layers.pop(-1)
+        #while len(language_layers) > select_layer:
+        #   language_layers.pop(-1)
 
         overwatch.info(
             f"Truncated Qwen language layers from "
@@ -1760,10 +1763,23 @@ class Psi0Model(nn.Module):
             # use hidden states from the last layer
             vlm_hidden_states = vlm_hidden_states_[-1] # shape (B, seq_len, D_h)  shape(16, 80, 2048)
             vlm_hidden_states = vlm_hidden_states.unsqueeze(1) # shape (B, 1, seq_len, D_h) (16, 1, 80, 2048)
+
+            
             if profile_components:
                 _sync_cuda_for_profile()
                 backbone_end = time.perf_counter()
                 action_head_start = backbone_end
+                
+            trt_obs_cache = None
+
+            if getattr(self, "use_trt_action_head", False):
+                trt_obs_cache = self.trt_action_head.encode_obs(
+                    vlm_hidden_states=vlm_hidden_states,
+                    states=states,
+                    traj2ds=traj2ds,
+                    vlm_attn_mask=None,
+                )
+                
             # generate action from noise
             action_samples = torch.randn(
                 bsz, self.action_horizon, self.action_dim, device=self.device
@@ -1772,17 +1788,27 @@ class Psi0Model(nn.Module):
 
             for timestep in self.noise_scheduler.timesteps:
                 batched_timestep = timestep.expand(bsz).to(self.device)
-                model_pred = self.action_header(
-                    hidden_states=None,
-                    timestep=batched_timestep,
-                    joint_attention_kwargs=dict(
-                        action_hidden_embeds=action_samples, # (B,Tp,Da)
-                        views=vlm_hidden_states,  # (B,V,N,D)
-                        obs=states,  # (B,1,M)
-                        traj2ds=traj2ds,  # (B, C, 3, H, W)
-                    ),
-                    return_dict=True,
-                ).action
+                if getattr(self, "use_trt_action_head", False):
+                    obs_hidden_states, obs_token_mask = trt_obs_cache
+
+                    model_pred = self.trt_action_head.step(
+                        action_samples=action_samples,
+                        timestep=batched_timestep,
+                        obs_hidden_states=obs_hidden_states,
+                        obs_token_mask=obs_token_mask,
+                    )
+                else:
+                    model_pred = self.action_header(
+                        hidden_states=None,
+                        timestep=batched_timestep,
+                        joint_attention_kwargs=dict(
+                            action_hidden_embeds=action_samples,
+                            views=vlm_hidden_states,
+                            obs=states,
+                            traj2ds=traj2ds,
+                        ),
+                        return_dict=True,
+                    ).action
                 action_samples = self.noise_scheduler.step(
                     model_output=model_pred, timestep=timestep, sample=action_samples # type: ignore
                 ).prev_sample

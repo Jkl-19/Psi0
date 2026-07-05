@@ -265,34 +265,46 @@ class Server:
         self.model = Psi0Model.from_pretrained(run_dir, ckpt_step, launch_config, device=device)
         self.model.to(device)
         self.model.eval()
-                # ===== Selective torch.compile optimization =====
-        #
-        # Compile only the action-head forward pass. Psi0 calls this module
-        # repeatedly during each flow-inference request, so this is the
-        # lowest-risk place to begin optimizing.
-        #
-        # We intentionally do not compile the entire Psi0 model yet:
-        # - the Qwen3-VL backbone is larger and more complex;
-        # - the RTC path includes preprocessing and gradient-based guidance;
-        # - compiling a smaller region is easier to test and debug.
-        if ENABLE_TORCH_COMPILE:
+        # ===== TEMPORARY: force TensorRT action head =====
+        FORCE_TRT_ACTION_HEAD = True
+        TRT_ENGINE_DIR = "psi0_trt_deployment/engines"
+        TRT_PRECISION = "bf16"
+
+        if FORCE_TRT_ACTION_HEAD:
             overwatch.info(
-                "Compiling self.model.action_header.forward "
-                f"with torch.compile(mode={TORCH_COMPILE_MODE!r})..."
+                f"[TEMP TRT] Loading Psi0 TensorRT action-head engines from "
+                f"{TRT_ENGINE_DIR} with precision={TRT_PRECISION}"
             )
 
-            self.model.action_header.forward = torch.compile(
-                self.model.action_header.forward,
-                mode=TORCH_COMPILE_MODE,
-                fullgraph=False,
-                dynamic=False,
+            from scripts.deployment.trt_model_forward import setup_psi0_action_head_trt
+
+            setup_psi0_action_head_trt(
+                model=self.model,
+                engine_dir=TRT_ENGINE_DIR,
+                precision=TRT_PRECISION,
+                free_pytorch_modules=False,
             )
 
-            overwatch.info(
-                "Installed compiled action-head forward function. "
-                "The first predictions may take longer while compilation "
-                "and kernel tuning run."
-            )
+            overwatch.info("[TEMP TRT] Installed Psi0 TensorRT action-head runtime.")
+
+        else:
+            # ===== Selective torch.compile optimization =====
+            if ENABLE_TORCH_COMPILE:
+                overwatch.info(
+                    "Compiling self.model.action_header.forward "
+                    f"with torch.compile(mode={TORCH_COMPILE_MODE!r})..."
+                )
+                self.model.action_header.forward = torch.compile(
+                    self.model.action_header.forward,
+                    mode=TORCH_COMPILE_MODE,
+                    fullgraph=False,
+                    dynamic=False,
+                )
+                overwatch.info(
+                    "Installed compiled action-head forward function. "
+                    "The first predictions may take longer while compilation "
+                    "and kernel tuning run."
+                )
             
             
         from psi.config.transform import SimpleRepackTransform, Psi0ModelTransform, ActionStateTransform
