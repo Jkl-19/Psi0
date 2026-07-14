@@ -1,23 +1,6 @@
 #!/usr/bin/env python3
 """
 Export Psi0 action-head components to ONNX for TensorRT.
-
-This is Psi0's analogue of GR00T N1.7 action_head export.
-
-GR00T action_head exports:
-  - state_encoder.onnx
-  - action_encoder.onnx
-  - dit_bf16.onnx
-  - action_decoder.onnx
-
-Psi0 action_head exports:
-  - obs_encoder.onnx
-  - action_encoder.onnx
-  - dit_bf16.onnx
-  - action_decoder.onnx
-
-Backbone stays PyTorch.
-The denoising/scheduler loop stays PyTorch.
 """
 
 from __future__ import annotations
@@ -54,7 +37,57 @@ def verify_onnx_export(onnx_path: str) -> None:
     onnx.checker.check_model(onnx_path)
     logger.info("ONNX model verified successfully.")
 
+def verify_onnx_with_ort(
+    onnx_path: str,
+    pytorch_module: torch.nn.Module,
+    sample_inputs: dict[str, torch.Tensor],
+    output_names: list[str],
+    label: str = "model",
+) -> dict[str, float]:
+    """Compare ONNX Runtime outputs against PyTorch using cosine similarity."""
+    try:
+        import onnxruntime as ort
+    except ImportError:
+        logger.warning("onnxruntime not installed; skipping ORT verification")
+        return {}
 
+    logger.info(f"ORT verification for {label}...")
+
+    # Run PyTorch.
+    with torch.inference_mode():
+        pt_inputs = tuple(sample_inputs.values())
+        pt_outputs = pytorch_module(*pt_inputs)
+
+    if not isinstance(pt_outputs, (tuple, list)):
+        pt_outputs = (pt_outputs,)
+
+    # Run ONNX Runtime.
+    session = ort.InferenceSession(
+        onnx_path,
+        providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+    )
+    ort_inputs = {
+        name: tensor.cpu().numpy()
+        for name, tensor in sample_inputs.items()
+    }
+    ort_outputs = session.run(output_names, ort_inputs)
+
+    # Compare outputs.
+    results = {}
+    for index, name in enumerate(output_names):
+        pt_flat = pt_outputs[index].float().flatten().cpu()
+        ort_flat = torch.tensor(ort_outputs[index]).float().flatten()
+
+        cosine = torch.nn.functional.cosine_similarity(
+            pt_flat.unsqueeze(0),
+            ort_flat.unsqueeze(0),
+        ).item()
+
+        results[name] = cosine
+        logger.info(f"{name}: ORT vs PyTorch cosine = {cosine:.6f}")
+
+    return results
+    
 class Psi0ActionHeadInputCapture:
     """Capture the real inputs entering Psi0 action_header during predict_action."""
 
@@ -179,15 +212,6 @@ def export_obs_encoder_to_onnx(
     precision: str = "bf16",
     batch_size: int = 1,
 ):
-    """Export Psi0 obs_proj as obs_encoder.onnx.
-
-    GR00T equivalent:
-      export_state_encoder_to_onnx(...)
-
-    Difference:
-      GR00T state_encoder consumes robot state only.
-      Psi0 obs_proj consumes VLM hidden states + robot state + optional traj2ds.
-    """
     logger.info("\n" + "=" * 80)
     logger.info("Exporting Psi0 obs_encoder to ONNX")
     logger.info("=" * 80)
@@ -371,15 +395,6 @@ def export_dit_to_onnx(
     precision: str = "bf16",
     batch_size: int = 1,
 ):
-    """Export Psi0 transformer_blocks as dit_bf16.onnx / dit_fp16.onnx / dit_fp32.onnx.
-
-    GR00T equivalent:
-      export_dit_to_onnx(...)
-
-    Difference:
-      GR00T DiT receives timestep directly.
-      Psi0 transformer blocks receive temb, so time_ins_embed stays PyTorch glue.
-    """
     logger.info("\n" + "=" * 80)
     logger.info("Exporting Psi0 DiT core to ONNX")
     logger.info("=" * 80)
@@ -471,6 +486,13 @@ def export_dit_to_onnx(
         )
 
     verify_onnx_export(output_path)
+    verify_onnx_with_ort(
+        onnx_path=output_path,
+        pytorch_module=wrapper,
+        sample_inputs=dict(zip(input_names, export_inputs)),
+        output_names=["action_hidden_states_out"],
+        label="dit",
+    )
     return output_path
 
 
