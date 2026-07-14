@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """
 Build TensorRT engines for Psi0 action-head ONNX files.
-
-GR00T equivalent:
-  scripts/deployment/build_tensorrt_engine.py
 """
 
 from __future__ import annotations

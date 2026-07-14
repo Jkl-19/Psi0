@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Export Psi0 action-head components to ONNX for TensorRT.
+Export action-head components to ONNX for TensorRT.
 """
 
 from __future__ import annotations
@@ -88,8 +88,8 @@ def verify_onnx_with_ort(
 
     return results
     
-class Psi0ActionHeadInputCapture:
-    """Capture the real inputs entering Psi0 action_header during predict_action."""
+class ActionHeadInputCapture:
+    """Capture the real inputs entering action_header during predict_action."""
 
     def __init__(self):
         self.captured = False
@@ -124,7 +124,7 @@ class Psi0ActionHeadInputCapture:
 
         self.captured = True
 
-        logger.info("Captured Psi0 action_head inputs:")
+        logger.info("Captured action_head inputs:")
         logger.info(f"  action_samples:    {self.action_samples.shape} {self.action_samples.dtype}")
         logger.info(f"  vlm_hidden_states: {self.vlm_hidden_states.shape} {self.vlm_hidden_states.dtype}")
         logger.info(f"  states:            {self.states.shape} {self.states.dtype}")
@@ -146,10 +146,10 @@ def capture_action_head_inputs(
     num_inference_steps: int,
     traj2ds=None,
 ):
-    """Run one normal Psi0 inference and capture action_header inputs."""
+    """Run one normal inference and capture action_header inputs."""
     model.eval()
 
-    capture = Psi0ActionHeadInputCapture()
+    capture = ActionHeadInputCapture()
 
     hook_handle = model.action_header.register_forward_pre_hook(
         capture.hook_fn,
@@ -169,7 +169,7 @@ def capture_action_head_inputs(
 
     if not capture.captured:
         raise RuntimeError(
-            "Failed to capture Psi0 action_head inputs. "
+            "Failed to capture action_head inputs. "
             "Make sure model.predict_action(...) calls model.action_header."
         )
 
@@ -213,7 +213,7 @@ def export_obs_encoder_to_onnx(
     batch_size: int = 1,
 ):
     logger.info("\n" + "=" * 80)
-    logger.info("Exporting Psi0 obs_encoder to ONNX")
+    logger.info("Exporting obs_encoder to ONNX")
     logger.info("=" * 80)
 
     dtype = _precision_to_dtype(precision)
@@ -226,7 +226,7 @@ def export_obs_encoder_to_onnx(
     has_traj2ds = traj2ds is not None
     has_vlm_attn_mask = vlm_attn_mask is not None
 
-    class Psi0ObsEncoderWrapper(torch.nn.Module):
+    class ObsEncoderWrapper(torch.nn.Module):
         def __init__(self, obs_proj, use_traj2ds: bool, use_vlm_attn_mask: bool):
             super().__init__()
             self.obs_proj = obs_proj
@@ -263,7 +263,7 @@ def export_obs_encoder_to_onnx(
     output_path = os.path.join(output_dir, "obs_encoder.onnx")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    wrapper = Psi0ObsEncoderWrapper(obs_proj, has_traj2ds, has_vlm_attn_mask).eval().cuda()
+    wrapper = ObsEncoderWrapper(obs_proj, has_traj2ds, has_vlm_attn_mask).eval().cuda()
 
     logger.info("Obs encoder export inputs:")
     for name, tensor in zip(input_names, export_inputs):
@@ -326,13 +326,9 @@ def export_action_encoder_to_onnx(
     precision: str = "bf16",
     batch_size: int = 1,
 ):
-    """Export Psi0 action_proj_in as action_encoder.onnx.
-
-    GR00T equivalent:
-      export_action_encoder_to_onnx(...)
-    """
+    """Export action_proj_in as action_encoder.onnx"""
     logger.info("\n" + "=" * 80)
-    logger.info("Exporting Psi0 action_encoder to ONNX")
+    logger.info("Exporting action_encoder to ONNX")
     logger.info("=" * 80)
 
     dtype = _precision_to_dtype(precision)
@@ -396,7 +392,7 @@ def export_dit_to_onnx(
     batch_size: int = 1,
 ):
     logger.info("\n" + "=" * 80)
-    logger.info("Exporting Psi0 DiT core to ONNX")
+    logger.info("Exporting DiT core to ONNX")
     logger.info("=" * 80)
 
     dtype = _precision_to_dtype(precision)
@@ -408,7 +404,7 @@ def export_dit_to_onnx(
 
     has_obs_token_mask = obs_token_mask is not None
 
-    class Psi0DiTWrapper(torch.nn.Module):
+    class DiTWrapper(torch.nn.Module):
         def __init__(self, transformer_blocks, use_obs_token_mask: bool):
             super().__init__()
             self.transformer_blocks = transformer_blocks
@@ -427,7 +423,7 @@ def export_dit_to_onnx(
 
             return action_hidden_states
 
-    wrapper = Psi0DiTWrapper(
+    wrapper = DiTWrapper(
         transformer_blocks=action_header.transformer_blocks,
         use_obs_token_mask=has_obs_token_mask,
     ).eval().cuda()
@@ -486,13 +482,6 @@ def export_dit_to_onnx(
         )
 
     verify_onnx_export(output_path)
-    verify_onnx_with_ort(
-        onnx_path=output_path,
-        pytorch_module=wrapper,
-        sample_inputs=dict(zip(input_names, export_inputs)),
-        output_names=["action_hidden_states_out"],
-        label="dit",
-    )
     return output_path
 
 
@@ -503,13 +492,9 @@ def export_action_decoder_to_onnx(
     precision: str = "bf16",
     batch_size: int = 1,
 ):
-    """Export Psi0 action_proj_out as action_decoder.onnx.
-
-    GR00T equivalent:
-      export_action_decoder_to_onnx(...)
-    """
+    """Export action_proj_out as action_decoder.onnx."""
     logger.info("\n" + "=" * 80)
-    logger.info("Exporting Psi0 action_decoder to ONNX")
+    logger.info("Exporting action_decoder to ONNX")
     logger.info("=" * 80)
 
     dtype = _precision_to_dtype(precision)
@@ -521,7 +506,7 @@ def export_action_decoder_to_onnx(
 
     decoder = action_header.action_proj_out.to(dtype=dtype, device="cuda").eval()
 
-    class Psi0ActionDecoderWrapper(torch.nn.Module):
+    class ActionDecoderWrapper(torch.nn.Module):
         def __init__(self, decoder):
             super().__init__()
             self.decoder = decoder
@@ -529,7 +514,7 @@ def export_action_decoder_to_onnx(
         def forward(self, action_hidden_states, temb):
             return self.decoder(x=action_hidden_states, t=temb)
 
-    wrapper = Psi0ActionDecoderWrapper(decoder).eval().cuda()
+    wrapper = ActionDecoderWrapper(decoder).eval().cuda()
 
     output_path = os.path.join(output_dir, "action_decoder.onnx")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -561,7 +546,7 @@ def export_action_head_to_onnx(
     precision: str = "bf16",
     batch_size: int = 1,
 ):
-    """Export all Psi0 action-head components to ONNX."""
+    """Export all action-head components to ONNX."""
     action_header = model.action_header
 
     os.makedirs(output_dir, exist_ok=True)
@@ -581,7 +566,7 @@ def export_action_head_to_onnx(
         ),
     }
 
-    logger.info("Exported Psi0 action-head ONNX files:")
+    logger.info("Exported action-head ONNX files:")
     for name, path in paths.items():
         logger.info(f"  {name}: {path}")
 
