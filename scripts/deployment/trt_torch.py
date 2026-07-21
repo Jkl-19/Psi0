@@ -14,12 +14,12 @@ def _trt_dtype_to_torch_dtype(dtype: trt.DataType) -> torch.dtype:
     """
     dtype_str = str(dtype).lower()
 
+    if "bfloat16" in dtype_str or "bf16" in dtype_str:
+        return torch.bfloat16
     if "float" in dtype_str and "16" not in dtype_str:
         return torch.float32
     if "half" in dtype_str or "float16" in dtype_str or "fp16" in dtype_str:
         return torch.float16
-    if "bfloat16" in dtype_str or "bf16" in dtype_str:
-        return torch.bfloat16
     if "int8" in dtype_str:
         return torch.int8
     if "int32" in dtype_str:
@@ -93,6 +93,22 @@ class Engine:
         print(f"[TRT] Loaded engine: {self.engine_path}")
         print(f"[TRT]   inputs:  {self.input_names}")
         print(f"[TRT]   outputs: {self.output_names}")
+
+    def dtype_of(self, tensor_name: str) -> torch.dtype:
+        """Return the PyTorch dtype expected by one engine binding."""
+        try:
+            return self.name_to_dtype[tensor_name]
+        except KeyError as exc:
+            raise KeyError(
+                f"Unknown binding {tensor_name!r} in {self.engine_path.name}. "
+                f"Known bindings: {list(self.name_to_dtype)}"
+            ) from exc
+
+    def close(self) -> None:
+        """Release TensorRT objects owned by this wrapper."""
+        self.context = None
+        self.engine = None
+        self.runtime = None
 
     def _prepare_input(self, name: str, tensor: torch.Tensor) -> torch.Tensor:
         expected_dtype = self.name_to_dtype[name]

@@ -85,7 +85,22 @@ def main():
     psi0.to(device)
     psi0.eval()
     print("Model loaded successfully.")
+    
+    from scripts.deployment.trt_model_forward import setup_full_pipeline_tensorrt
 
+    setup_full_pipeline_tensorrt(
+        model=psi0,
+        engine_dir=project_root / "psi0_trt_deployment" / "engines",
+        precision="bf16",
+        free_pytorch_modules=True,
+    )
+
+    psi0.use_trt_action_head = True
+    #psi0.action_header.forward = torch.compile(
+    #    psi0.action_header.forward,
+    #    mode="max-autotune",
+    #)
+    #print("PyTorch action head compiled.")
     # ------------------------------------------------------------------
     # Load dataset
     # ------------------------------------------------------------------
@@ -93,6 +108,8 @@ def main():
 
     data_cfg: LerobotDataConfig = launch_config.data  # type: ignore
     maxmin = data_cfg.transform.field
+    data_cfg.root_dir = str(project_root / "data" / "real")
+    print(f"Overriding dataset root_dir to: {data_cfg.root_dir}")
 
     transform_kwargs = dict(vlm_processor=psi0.vlm_processor)
     # vlm_processor = AutoProcessor.from_pretrained("Qwen/Qwen3-VL-2B-Instruct")

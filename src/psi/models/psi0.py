@@ -1537,6 +1537,8 @@ class Psi0Model(nn.Module):
         
         self.use_trt_action_head = False #jkl
         self.trt_action_head = None
+        self.use_trt_backbone = False
+        self.trt_backbone = None
 
     # load pretrained vlm+action head, and all the modules needed for predict_action
     @classmethod
@@ -1749,19 +1751,27 @@ class Psi0Model(nn.Module):
             
         with torch.autocast("cuda", dtype=torch.bfloat16):
             # extract vision + language features
-            output = self.vlm_model(
-                input_ids=batch_input_ids,
-                attention_mask=batch_attention_mask,
-                pixel_values=batch_pixel_values,
-                image_grid_thw=batch_image_grid_thw,
-                output_hidden_states=True,
-                return_dict=True
-            )
-            vlm_hidden_states_ = output.hidden_states # len(vlm_hidden_states_) == 29
-            
+            if getattr(self, "use_trt_backbone", False):
+                vlm_hidden_states = self.trt_backbone(
+                    input_ids=batch_input_ids,
+                    attention_mask=batch_attention_mask,
+                    pixel_values=batch_pixel_values,
+                    image_grid_thw=batch_image_grid_thw,
+                )
+            else:
+                output = self.vlm_model(
+                    input_ids=batch_input_ids,
+                    attention_mask=batch_attention_mask,
+                    pixel_values=batch_pixel_values,
+                    image_grid_thw=batch_image_grid_thw,
+                    output_hidden_states=True,
+                    return_dict=True
+                )
+                vlm_hidden_states_ = output.hidden_states # len(vlm_hidden_states_) == 29
+                
 
-            # use hidden states from the last layer
-            vlm_hidden_states = vlm_hidden_states_[-1] # shape (B, seq_len, D_h)  shape(16, 80, 2048)
+                # use hidden states from the last layer
+                vlm_hidden_states = vlm_hidden_states_[-1] # shape (B, seq_len, D_h)  shape(16, 80, 2048)
             vlm_hidden_states = vlm_hidden_states.unsqueeze(1) # shape (B, 1, seq_len, D_h) (16, 1, 80, 2048)
 
             
@@ -1921,19 +1931,27 @@ class Psi0Model(nn.Module):
 
         with torch.autocast("cuda", dtype=torch.bfloat16):
             # extract vision + language features
-            output = self.vlm_model(
-                input_ids=batch_input_ids,
-                attention_mask=batch_attention_mask,
-                pixel_values=batch_pixel_values,
-                image_grid_thw=batch_image_grid_thw,
-                output_hidden_states=True,
-                return_dict=True
-            )
-            vlm_hidden_states_ = output.hidden_states # len(vlm_hidden_states_) == 29
-            
+            if getattr(self, "use_trt_backbone", False):
+                vlm_hidden_states = self.trt_backbone(
+                    input_ids=batch_input_ids,
+                    attention_mask=batch_attention_mask,
+                    pixel_values=batch_pixel_values,
+                    image_grid_thw=batch_image_grid_thw,
+                )
+            else:
+                output = self.vlm_model(
+                    input_ids=batch_input_ids,
+                    attention_mask=batch_attention_mask,
+                    pixel_values=batch_pixel_values,
+                    image_grid_thw=batch_image_grid_thw,
+                    output_hidden_states=True,
+                    return_dict=True
+                )
+                vlm_hidden_states_ = output.hidden_states # len(vlm_hidden_states_) == 29
+                
 
-            # use hidden states from the last layer
-            vlm_hidden_states = vlm_hidden_states_[-1] # shape (B, seq_len, D_h)  shape(16, 80, 2048)
+                # use hidden states from the last layer
+                vlm_hidden_states = vlm_hidden_states_[-1] # shape (B, seq_len, D_h)  shape(16, 80, 2048)
             vlm_hidden_states = vlm_hidden_states.unsqueeze(1) # shape (B, 1, seq_len, D_h) (16, 1, 80, 2048)
 
             # generate action from noise
@@ -2551,4 +2569,3 @@ class Psi0Model(nn.Module):
     @torch.inference_mode()
     def chat(self):
         ...
-    
